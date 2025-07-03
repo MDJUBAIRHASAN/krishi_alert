@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 
 st.set_page_config("Krishi Alert", "🌾")
-OPENWEATHER_API_KEY = "YOUR_OPENWEATHERMAP_KEY"
+OPENWEATHER_API_KEY = "6ddfd2cbb961005f88c1e690cbe1179a"
 
 PEST_ALERTS = {
     "Paddy": "⚠️ Brown Planthopper outbreak in Boro. Monitor water & use resistant varieties.",
