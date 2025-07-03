@@ -2,11 +2,9 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 
-# --- Configuration ---
 st.set_page_config("Krishi Alert", "🌾")
-OPENWEATHER_API_KEY = "YOUR_OPENWEATHERMAP_KEY"
+OPENWEATHER_API_KEY = "6ddfd2cbb961005f88c1e690cbe1179a"
 
-# --- Data ---
 PEST_ALERTS = {
     "Paddy": "⚠️ Brown Planthopper outbreak in Boro. Monitor water & use resistant varieties.",
     "Maize": "⚠️ Fall armyworm & stem borer detected. Use pheromone traps.",
@@ -31,50 +29,33 @@ FERTILIZER_DATA = {
     ]
 }
 
-# --- UI ---
 st.title("🌾 Krishi Alert: Farmer Assistant")
 district = st.selectbox("📍 Select District", ["Dhaka","Rajshahi","Khulna","Chattogram","Sylhet","Mymensingh"])
 crop = st.selectbox("🌱 Select Crop", ["Paddy","Maize","Potato"])
 
 if st.button("🔍 Get Recommendations"):
-    # --- Fertilizer Schedule ---
     st.subheader("🧪 Fertilizer Schedule")
     for item in FERTILIZER_DATA.get(crop, []):
         st.markdown(f"✅ **{item['Stage']}**: {item['Fertilizer']}")
 
-    # --- Pest Alerts ---
     st.subheader("🦟 Pest Alerts")
     st.info(PEST_ALERTS.get(crop, "No current alerts."))
 
-    # --- Weather Forecast ---
-    st.subheader("🌦️ Current Weather")
-    try:
-        res = requests.get("http://api.openweathermap.org/data/2.5/weather",
-            params={"q": f"{district},BD", "appid": OPENWEATHER_API_KEY, "units": "metric"})
-        if res.ok:
-            w = res.json()
-            st.write(f"🌡️ {w['main']['temp']}°C | {w['weather'][0]['description'].capitalize()}")
-            st.write(f"💧 Humidity: {w['main']['humidity']}%")
-            st.write(f"🍃 Wind speed: {w['wind']['speed']} m/s")
-        else:
-            st.error("Weather data unavailable.")
-    except:
-        st.error("Weather data unavailable.")
+    st.subheader("🌦️ 7‑Day Weather Forecast (Live)")
+    
+::contentReference[oaicite:0]{index=0}
 
-    # --- Market Prices ---
-    st.subheader("💰 Today's Market Prices")
+
+    st.subheader("💰 Today's Market Prices — Live from DAM")
     try:
         page = requests.get("https://market.dam.gov.bd/market_daily_price_report?L=E")
         soup = BeautifulSoup(page.content, "html.parser")
-        table = soup.find("table")
-        st.markdown("**Latest prices (per kg/L/Maund, as available):**")
+        table = soup.find_all("table")[0]
         for row in table.find_all("tr")[1:]:
-            cols = row.find_all("td")
-            if len(cols) >= 2:
-                item = cols[0].get_text(strip=True)
-                price = cols[1].get_text(strip=True)
-                if price:
-                    st.write(f"• **{item}** — {price}")
-        st.markdown("📌 Source: [market.dam.gov.bd](https://market.dam.gov.bd/market_daily_price_report?L=E)")
-    except Exception as e:
-        st.error("Failed to fetch market prices.")
+            cols = [td.get_text(strip=True) for td in row.find_all("td")]
+            if len(cols) >= 3 and cols[1] and cols[2]:
+                st.write(f"• **{cols[0]}** — Retail: {cols[1]} | Wholesale: {cols[2]}")
+        st.markdown("📌 *Source: Department of Agricultural Marketing (DAM)*")
+    except Exception:
+        st.error("⚠️ Failed to fetch market prices. DAM site may have updated.")
+
