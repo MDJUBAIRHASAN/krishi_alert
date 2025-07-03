@@ -1,91 +1,76 @@
 import streamlit as st
+import requests
 
-st.set_page_config(page_title="Krishi Alert", page_icon="🌾")
+# Configuration
+st.set_page_config("Krishi Alert", "🌾")
 
+OPENWEATHER_API_KEY = "YOUR_OPENWEATHERMAP_KEY"  # free signup at openweathermap.org
+DAM_PRICE_URL = "https://market.dam.gov.bd/market_daily_price_report?L=E"
+
+# Static pest alerts
+PEST_ALERTS = {
+    "Paddy": "⚠️ Recent outbreaks of Brown Planthopper in Boro fields. Monitor water levels & use resistant varieties.",
+    "Maize": "⚠️ Fall armyworm & stem borer detected. Deploy pheromone traps or early scouting advised.",
+    "Potato": "⚠️ Late blight risk. Avoid overhead irrigation and spray fungicide early."
+}
+
+# Real fertilizer data
+FERTILIZER_DATA = {
+    "Paddy": [
+        {"Stage": "Basal (land prep)", "Fertilizer": "1/3 Urea, full TSP & MOP, gypsum, ZnSO₄ (per bigha)"},
+        {"Stage": "Tillering (20–25 days)", "Fertilizer": "1/3 Urea"},
+        {"Stage": "Panicle initiation", "Fertilizer": "1/3 Urea"}
+    ],
+    "Maize": [
+        {"Stage": "Basal", "Fertilizer": "1/3 N + full P, K, S, Mg, Zn, B (per ha)"},
+        {"Stage": "30–35 DAS", "Fertilizer": "1/3 N"},
+        {"Stage": "50–60 DAS", "Fertilizer": "1/3 N"}
+    ],
+    "Potato": [
+        {"Stage": "Before planting", "Fertilizer": "Cow dung, Urea, TSP, MOP, S (per ha)"},
+        {"Stage": "30 DAP", "Fertilizer": "Top-dress Urea if needed"},
+        {"Stage": "50 DAP", "Fertilizer": "MOP if deficiency"}
+    ]
+}
+
+# --- UI ---
 st.title("🌾 Krishi Alert: Farmer Assistant")
-st.markdown("Get crop-specific guidance for your district.")
-
-# --- Input Section ---
-district = st.selectbox("📍 Select District", [
-    "Dhaka", "Rajshahi", "Rangpur", "Sylhet", "Barisal", "Khulna", "Mymensingh", "Chattogram"
-])
-
-crop = st.selectbox("🌱 Select Crop", [
-    "Paddy", "Wheat", "Potato", "Brinjal", "Tomato", "Jute", "Maize"
-])
-
-
-fertilizer_data = {
-"Paddy": [
-{"Stage": "Land preparation (Basal)", "Fertilizer": "1/3 Urea (13 kg), full TSP (13 kg), full MOP (22 kg), Gypsum (15 kg), Zinc sulfate (1.5 kg) per bigha"},
-{"Stage": "Tillering (20–25 days later)", "Fertilizer": "1/3 Urea (13 kg)"},
-{"Stage": "Panicle initiation (5–7 days before)", "Fertilizer": "1/3 Urea (13 kg)"}
-],
-"Maize": [
-{"Stage": "Basal (at planting)", "Fertilizer": "1/3 Nitrogen (22 kg), full Phosphorus (18 kg), full Potassium (37 kg), Sulfur (12 kg), Magnesium, Zinc, Boron per ha"},
-{"Stage": "30–35 days after sowing", "Fertilizer": "1/3 Nitrogen (22 kg)"},
-{"Stage": "50–60 days after sowing (tasseling)", "Fertilizer": "1/3 Nitrogen (22 kg)"}
-],
-"Potato": [
-{"Stage": "Before planting", "Fertilizer": "Cow dung (5 tons), Urea (45 kg), TSP (10 kg), MOP (45 kg), Sulfur (5 kg) per ha"},
-{"Stage": "30 days after planting", "Fertilizer": "Top dress: extra Urea if needed based on growth"},
-{"Stage": "50 days after planting", "Fertilizer": "Light MOP if potassium deficiency seen"}
-]
-}
-
-st.subheader("🦟 Pest Alerts")
-alerts = {
-    "Paddy": "⚠️ **Brown Planthopper (Current Poka)** infestations reported in Boro fields — causes plant drying. Prevent with water management and resistant varieties." ,
-    "Maize": "⚠️ **Armyworm / Stem borer / Fall armyworm** are major maize pests — use pheromone traps and early scouting." ,
-    "Potato": "⚠️ **Late blight** (Phytophthora infestans) common — spray fungicide at first signs; avoid overhead irrigation."
-}
-st.markdown(alerts.get(crop, "No current pest alerts for this crop."))
-
-st.subheader("🌦️ Weather Forecast (Dhaka)")
-# Display full 7-day forecast widget
-
-::contentReference[oaicite:5]{index=5}
-
-st.markdown("👆 Use this info to plan planting, spraying, or harvesting.")
-st.subheader("💰 Today’s Market Prices (from DAM)")
-prices = {
-    "Aman-Fine Rice": "৳72–75/kg",
-    "Boro-Medium Rice": "৳55–57/kg",
-    "Onion (local)": "৳60–64/kg",
-    "Green Chili": "৳218–237/kg",
-    # add more as needed
-}
-for item, val in prices.items():
-    st.write(f"• **{item}**: {val}")
-st.markdown("Source: Department of Agricultural Marketing (DAM)")  # static snapshot from DAM data :contentReference[oaicite:7]{index=7}
-
+district = st.selectbox("📍 Select District", ["Dhaka","Rajshahi","Khulna","Chattogram","Sylhet","Mymensingh"])
+crop = st.selectbox("🌱 Select Crop", ["Paddy","Maize","Potato"])
 
 if st.button("🔍 Get Recommendations"):
-    st.success(f"Showing guidance for {crop} in {district}...")
-
-    # Placeholder for the outputs (to be built in next steps)
+    # Fertilizer
     st.subheader("🧪 Fertilizer Schedule")
-    schedule = fertilizer_data.get(crop)
-    if schedule:
-        for item in schedule:
-            st.markdown(f"✅ {item['Stage']}: {item['Fertilizer']}")
-    else:
-        st.info("No fertilizer schedule available for this crop yet.")
+    for item in FERTILIZER_DATA.get(crop, []):
+        st.markdown(f"✅ **{item['Stage']}**: {item['Fertilizer']}")
 
+    # Pest Alerts
     st.subheader("🦟 Pest Alerts")
-    alerts = {
-        "Paddy": "...Brown Planthopper..." ,
-        "Maize": "...Armyworm..." ,
-        "Potato": "...Late blight..."
-    }
-    st.markdown(alerts.get(crop, "No current pest alerts for this crop."))
+    st.info(PEST_ALERTS.get(crop, "No current alerts for this crop."))
 
-    st.subheader("🌦️ Weather Forecast (Dhaka)")
-    st.markdown("👆 For your district, adjust if needed.")
-    st.markdown("Use local forecast services for higher accuracy.")
+    # Weather Forecast
+    st.subheader("🌦️ 7‑Day Weather Forecast")
+    weather = requests.get(
+        f"https://api.openweathermap.org/data/2.5/forecast/daily",
+        params={"q": district+",BD", "cnt":7, "appid": OPENWEATHER_API_KEY, "units":"metric"}
+    ).json()
+    for day in weather.get("list", []):
+        dt = day["dt"]
+        temp = day["temp"]
+        st.write(f"{st.time.strftime('%a, %d %b', st.time.localtime(dt))}: High {temp['max']}°C / Low {temp['min']}°C — {day['weather'][0]['description']}")
 
-    # Market prices
+    # Market Prices
     st.subheader("💰 Today’s Market Prices")
-    prices = {...}
-    for item,val in prices.items(): st.write(f"• **{item}**: {val}")
-    st.markdown("Source: DAM")
+    res = requests.get(DAM_PRICE_URL)
+    data = res.text
+    prices = {}
+    for line in data.splitlines():
+        if any(term in line for term in ["Onion-local","Green Chili","Aman-Fine","Boro-Medium"]):
+            parts = line.strip().split(":")
+            if len(parts)==2:
+                item, val = parts
+                prices[item.strip()] = val.strip()
+    for item,val in prices.items():
+        st.write(f"• **{item}**: {val}")
+
+    st.markdown("📌 *Prices source: DAM*")
