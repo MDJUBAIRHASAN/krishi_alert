@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 
 st.set_page_config("Krishi Alert", "🌾")
-OPENWEATHER_API_KEY = "6ddfd2cbb961005f88c1e690cbe1179a"
+OPENWEATHER_API_KEY = "YOUR_OPENWEATHERMAP_KEY"
 
 PEST_ALERTS = {
     "Paddy": "⚠️ Brown Planthopper outbreak in Boro. Monitor water & use resistant varieties.",
@@ -41,9 +41,19 @@ if st.button("🔍 Get Recommendations"):
     st.subheader("🦟 Pest Alerts")
     st.info(PEST_ALERTS.get(crop, "No current alerts."))
 
-    st.subheader("🌦️ 7‑Day Weather Forecast (Live)")
-    
-
+    st.subheader("🌦️ Current Weather")
+    try:
+        res = requests.get("http://api.openweathermap.org/data/2.5/weather",
+            params={"q": f"{district},BD", "appid": OPENWEATHER_API_KEY, "units": "metric"})
+        if res.ok:
+            w = res.json()
+            st.write(f"🌡️ {w['main']['temp']}°C | {w['weather'][0]['description'].capitalize()}")
+            st.write(f"💧 Humidity: {w['main']['humidity']}%")
+            st.write(f"🍃 Wind speed: {w['wind']['speed']} m/s")
+        else:
+            st.error("Weather data unavailable.")
+    except:
+        st.error("Weather data unavailable.")
 
     st.subheader("💰 Today's Market Prices — Live from DAM")
     try:
@@ -57,4 +67,3 @@ if st.button("🔍 Get Recommendations"):
         st.markdown("📌 *Source: Department of Agricultural Marketing (DAM)*")
     except Exception:
         st.error("⚠️ Failed to fetch market prices. DAM site may have updated.")
-
