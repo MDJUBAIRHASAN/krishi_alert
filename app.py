@@ -43,7 +43,6 @@ if st.button("🔍 Get Recommendations"):
 
     st.subheader("🌦️ 7‑Day Weather Forecast (Live)")
     
-::contentReference[oaicite:0]{index=0}
 
 
     st.subheader("💰 Today's Market Prices — Live from DAM")
