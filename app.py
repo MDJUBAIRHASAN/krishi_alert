@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 
 st.set_page_config("Krishi Alert", "🌾")
-OPENWEATHER_API_KEY = "6ddfd2cbb961005f88c1e690cbe1179a"
+OPENWEATHER_API_KEY = "YOUR_OPENWEATHERMAP_KEY"
 
 PEST_ALERTS = {
     "Paddy": "⚠️ Brown Planthopper outbreak in Boro. Monitor water & use resistant varieties.",
@@ -24,7 +24,7 @@ FERTILIZER_DATA = {
     ],
     "Potato": [
         {"Stage": "Before planting", "Fertilizer": "Cow dung, Urea, TSP, MOP, S"},
-        {"Stage": "30 DAP", "Fertilizer": "Top-dress Urea if needed"},
+        {"Stage": "30 DAP", "Fertilizer": "Top‑dress Urea if needed"},
         {"Stage": "50 DAP", "Fertilizer": "MOP if deficiency"}
     ]
 }
@@ -41,29 +41,22 @@ if st.button("🔍 Get Recommendations"):
     st.subheader("🦟 Pest Alerts")
     st.info(PEST_ALERTS.get(crop, "No current alerts."))
 
-    st.subheader("🌦️ Current Weather")
-    try:
-        res = requests.get("http://api.openweathermap.org/data/2.5/weather",
-            params={"q": f"{district},BD", "appid": OPENWEATHER_API_KEY, "units": "metric"})
-        if res.ok:
-            w = res.json()
-            st.write(f"🌡️ {w['main']['temp']}°C | {w['weather'][0]['description'].capitalize()}")
-            st.write(f"💧 Humidity: {w['main']['humidity']}%")
-            st.write(f"🍃 Wind speed: {w['wind']['speed']} m/s")
-        else:
-            st.error("Weather data unavailable.")
-    except:
-        st.error("Weather data unavailable.")
+    st.subheader("🌦️ 7‑Day Weather Forecast (Live)")
+    # Weather widget above will display automatically
 
     st.subheader("💰 Today's Market Prices — Live from DAM")
     try:
         page = requests.get("https://market.dam.gov.bd/market_daily_price_report?L=E")
         soup = BeautifulSoup(page.content, "html.parser")
+        # The table rows list daily prices
         table = soup.find_all("table")[0]
         for row in table.find_all("tr")[1:]:
-            cols = [td.get_text(strip=True) for td in row.find_all("td")]
-            if len(cols) >= 3 and cols[1] and cols[2]:
-                st.write(f"• **{cols[0]}** — Retail: {cols[1]} | Wholesale: {cols[2]}")
+            cols = row.find_all("td")
+            if len(cols) >= 3:
+                name = cols[0].get_text(strip=True)
+                retail = cols[1].get_text(strip=True)
+                wholesale = cols[2].get_text(strip=True)
+                st.write(f"• **{name}** — Retail: {retail} | Wholesale: {wholesale}")
         st.markdown("📌 *Source: Department of Agricultural Marketing (DAM)*")
     except Exception:
-        st.error("⚠️ Failed to fetch market prices. DAM site may have updated.")
+        st.error("⚠️ Failed to fetch market prices. DAM site layout may have changed.")
