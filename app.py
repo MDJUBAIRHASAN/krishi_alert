@@ -40,7 +40,7 @@ if st.button("🔍 Get Recommendations"):
     schedule = fertilizer_data.get(crop)
     if schedule:
         for item in schedule:
-        st.markdown(f"✅ {item['Stage']}: {item['Fertilizer']}")
+            st.markdown(f"✅ {item['Stage']}: {item['Fertilizer']}")
     else:
         st.info("No fertilizer schedule available for this crop yet.")
 
