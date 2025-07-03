@@ -38,31 +38,53 @@ if st.button("🔍 Get Recommendations"):
     for item in FERTILIZER_DATA.get(crop, []):
         st.markdown(f"✅ **{item['Stage']}**: {item['Fertilizer']}")
 
-    st.subheader("🦟 Pest Alerts")
-    st.info(PEST_ALERTS.get(crop, "No current alerts."))
+# Pest alerts
+st.subheader("🦟 Pest Alerts")
+st.info(PEST_ALERTS.get(crop, "No current alerts."))
 
-    st.subheader("🌦️ 7‑Day Weather Forecast (Live)")
-    # Weather widget above will display automatically
+# Weather (7-day)
+st.subheader("🌦️ 7-Day Weather Forecast (Live)")
+try:
+    url = "https://api.openweathermap.org/data/2.5/forecast"
+    params = {"q": f"{district},BD", "appid": OPENWEATHER_API_KEY, "units": "metric"}
+    res = requests.get(url, params=params)
+    data = res.json()
 
-    st.subheader("💰 Today's Market Prices — Live (DAM)")
+    if "list" in data:
+        shown_dates = set()
+        for item in data["list"]:
+            dt_txt = item["dt_txt"]
+            date = dt_txt.split(" ")[0]
+            if date not in shown_dates and len(shown_dates) < 7:
+                temp = item["main"]["temp"]
+                desc = item["weather"][0]["description"].capitalize()
+                humidity = item["main"]["humidity"]
+                wind = item["wind"]["speed"]
+                st.markdown(f"📅 {date}: 🌡️ {temp}°C, {desc}, 💧 {humidity}%, 🍃 {wind} m/s")
+                shown_dates.add(date)
+    else:
+        st.error("Weather data unavailable.")
+except:
+    st.error("Weather data unavailable.")
 
-    try:
-        page = requests.get("https://market.dam.gov.bd/market_daily_price_report?L=E")
-        page.encoding = page.apparent_encoding
-        text = page.text
+# Market Prices
+st.subheader("💰 Today's Market Prices — Live from DAM")
+try:
+    page = requests.get("https://www.dam.gov.bd/market_daily_price_report")
+    page.encoding = "utf-8"
+    soup = BeautifulSoup(page.text, "html.parser")
+    table = soup.find("table")
 
-        # Extract lines with a commodity format, e.g., "Aman-Fine: 72.00 - 75.00"
-        lines = [line.strip() for line in text.splitlines() if ':' in line and '-' in line]
-        if lines:
-            for line in lines:
-                parts = line.split(':', 1)
-                commodity = parts[0].strip()
-                price = parts[1].strip()
-                if commodity and price:
-                    st.write(f"• **{commodity}** — {price}")
-            st.markdown("📌 *Source: Department of Agricultural Marketing (DAM)*")
-        else:
-            st.error("⚠️ No price lines found—DAM site format may have changed.")
-    except Exception:
-        st.error("⚠️ Failed to fetch market prices. DAM site may have changed.")
+    if table:
+        rows = table.find_all("tr")[1:]
+        for row in rows:
+            cols = [td.get_text(strip=True) for td in row.find_all("td")]
+            if len(cols) >= 3:
+                commodity, retail, wholesale = cols[0], cols[1], cols[2]
+                st.write(f"• **{commodity}** — 🛒 Retail: {retail} | 🏬 Wholesale: {wholesale}")
+        st.markdown("📌 Source: Department of Agricultural Marketing (DAM)")
+    else:
+        st.error("⚠️ DAM site structure may have changed.")
+except Exception:
+    st.error("⚠️ Failed to fetch market prices. DAM site may have changed.")
 
