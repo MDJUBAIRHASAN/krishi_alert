@@ -44,19 +44,25 @@ if st.button("🔍 Get Recommendations"):
     st.subheader("🌦️ 7‑Day Weather Forecast (Live)")
     # Weather widget above will display automatically
 
-    st.subheader("💰 Today's Market Prices — Live from DAM")
+    st.subheader("💰 Today's Market Prices — Live (DAM)")
+
     try:
         page = requests.get("https://market.dam.gov.bd/market_daily_price_report?L=E")
-        soup = BeautifulSoup(page.content, "html.parser")
-        # The table rows list daily prices
-        table = soup.find_all("table")[0]
-        for row in table.find_all("tr")[1:]:
-            cols = row.find_all("td")
-            if len(cols) >= 3:
-                name = cols[0].get_text(strip=True)
-                retail = cols[1].get_text(strip=True)
-                wholesale = cols[2].get_text(strip=True)
-                st.write(f"• **{name}** — Retail: {retail} | Wholesale: {wholesale}")
-        st.markdown("📌 *Source: Department of Agricultural Marketing (DAM)*")
+        page.encoding = page.apparent_encoding
+        text = page.text
+
+        # Extract lines with a commodity format, e.g., "Aman-Fine: 72.00 - 75.00"
+        lines = [line.strip() for line in text.splitlines() if ':' in line and '-' in line]
+        if lines:
+            for line in lines:
+                parts = line.split(':', 1)
+                commodity = parts[0].strip()
+                price = parts[1].strip()
+                if commodity and price:
+                    st.write(f"• **{commodity}** — {price}")
+            st.markdown("📌 *Source: Department of Agricultural Marketing (DAM)*")
+        else:
+            st.error("⚠️ No price lines found—DAM site format may have changed.")
     except Exception:
-        st.error("⚠️ Failed to fetch market prices. DAM site layout may have changed.")
+        st.error("⚠️ Failed to fetch market prices. DAM site may have changed.")
+
