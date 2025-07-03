@@ -46,7 +46,7 @@ if st.button("🔍 Get Recommendations"):
     # Weather
     st.subheader("🌦️ Current Weather")
     res = requests.get(f"http://api.openweathermap.org/data/2.5/weather",
-                       params={"q": f"{district},BD", "appid": 6ddfd2cbb961005f88c1e690cbe1179a, "units": "metric"})
+                       params={"q": f"{district},BD", "appid": "6ddfd2cbb961005f88c1e690cbe1179a", "units": "metric"})
     if res.ok:
         w = res.json()
         st.write(f"🌡️ {w['main']['temp']}°C | {w['weather'][0]['description'].capitalize()}")
