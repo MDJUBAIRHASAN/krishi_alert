@@ -37,7 +37,12 @@ if st.button("🔍 Get Recommendations"):
 
     # Placeholder for the outputs (to be built in next steps)
     st.subheader("🧪 Fertilizer Schedule")
-    st.info("Coming soon...")
+    schedule = fertilizer_data.get(crop)
+    if schedule:
+        for item in schedule:
+        st.markdown(f"✅ {item['Stage']}: {item['Fertilizer']}")
+    else:
+        st.info("No fertilizer schedule available for this crop yet.")
 
     st.subheader("🦟 Pest Alerts")
     st.info("Coming soon...")
